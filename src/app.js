@@ -41,6 +41,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
 app.use("/",(req,res)=>{
   res.send("Api is working");
 })
+
 app.use('/api/auth', authRoutes);
 app.use('/admin/api/auth', adminAuthRoutes);
 app.use('/admin/api', adminOrderRoutes);
