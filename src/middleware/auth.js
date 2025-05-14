@@ -3,29 +3,32 @@ const jwt = require('jsonwebtoken');
 
 const authMiddleware = async (req, res, next) => {
   try {
+    console.log('🔒 Auth Middleware - Starting authentication check');
     const authHeader = req.headers.authorization;
     
     if (!authHeader) {
+      console.log('❌ Auth Middleware - No authorization header found');
       return res.status(401).json({ error: 'No authorization header' });
     }
 
     const token = authHeader.split(' ')[1];
     if (!token) {
+      console.log('❌ Auth Middleware - No token found in authorization header');
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    // Verify the JWT token (Supabase)
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
-    // Attach user to request object
-    req.user = user;
-    next();
+    console.log('🔑 Auth Middleware - Verifying token with JWT_SECRET');
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        console.log('❌ Auth Middleware - Token verification failed:', err.message);
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+      console.log('✅ Auth Middleware - Authentication successful for user:', decoded.id);
+      req.user = decoded;
+      next();
+    });
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error('❌ Auth Middleware - Unexpected error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

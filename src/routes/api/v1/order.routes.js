@@ -73,7 +73,7 @@ const { supabase } = require('../../../config/supabase');
  *               $ref: '#/components/schemas/Error'
  */
 router.post('/',
-  // authMiddleware,
+  authMiddleware,
   [
     body('store_id').isUUID(),
     body('items').isArray().notEmpty(),
@@ -112,7 +112,7 @@ router.post('/',
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
-          user_id: '00c324f4-136c-49c4-9436-120585f6eb95', // DEMO USER ID
+          user_id: req.user.id,
           store_id,
           total_amount,
           delivery_address,
@@ -187,9 +187,11 @@ router.post('/',
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/',
-  // authMiddleware,
+  authMiddleware,
   async (req, res) => {
     try {
+      console.log('📦 Orders - Fetching orders for user:', req.user.id);
+      
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -201,13 +203,18 @@ router.get('/',
             menu_items(name, image_url)
           )
         `)
-        .eq('user_id', '00c324f4-136c-49c4-9436-120585f6eb95')
+        .eq('user_id', req.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Orders - Error fetching orders:', error);
+        throw error;
+      }
+
+      console.log('✅ Orders - Successfully fetched orders:', data?.length || 0);
       res.json(data);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('❌ Orders - Error in GET /orders:', error);
       res.status(500).json({ error: error.message });
     }
   }

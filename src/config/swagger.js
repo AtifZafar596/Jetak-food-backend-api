@@ -4,41 +4,72 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'AA Food Delivery API',
+      title: 'AA Food API Documentation',
       version: '1.0.0',
-      description: 'API documentation for AA Food Delivery application',
-      contact: {
-        name: 'API Support',
-        email: 'support@aafood.com'
-      }
+      description: 'API documentation for AA Food application',
     },
     servers: [
       {
         url: 'http://localhost:3000',
-        description: 'Development server'
-      }
+        description: 'Development server',
+      },
     ],
     components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      },
       schemas: {
+        Location: {
+          type: 'object',
+          required: ['user_id', 'address', 'latitude', 'longitude'],
+          properties: {
+            user_id: {
+              type: 'string',
+              format: 'uuid',
+              description: 'The ID of the user',
+            },
+            address: {
+              type: 'string',
+              description: 'The full address of the location',
+            },
+            latitude: {
+              type: 'number',
+              format: 'float',
+              description: 'The latitude coordinate',
+            },
+            longitude: {
+              type: 'number',
+              format: 'float',
+              description: 'The longitude coordinate',
+            },
+            additional_note: {
+              type: 'string',
+              description: 'Additional information about the location (e.g., apartment number, floor)',
+            },
+            is_default: {
+              type: 'boolean',
+              description: 'Whether this is the default location for the user',
+              default: false,
+            },
+          },
+        },
         Error: {
           type: 'object',
           properties: {
-            success: {
-              type: 'boolean',
-              example: false
-            },
             error: {
               type: 'string',
-              description: 'Error message'
-            }
-          }
+              description: 'Error message',
+            },
+            details: {
+              type: 'string',
+              description: 'Detailed error information',
+            },
+            code: {
+              type: 'string',
+              description: 'Error code',
+            },
+            hint: {
+              type: 'string',
+              description: 'Helpful hint for resolving the error',
+            },
+          },
         },
         Success: {
           type: 'object',
@@ -220,40 +251,32 @@ const options = {
               format: 'date-time'
             }
           }
-        },
-        Location: {
-          type: 'object',
-          properties: {
-            id: {
-              type: 'string',
-              format: 'uuid'
-            },
-            user_id: {
-              type: 'string',
-              format: 'uuid'
-            },
-            address: {
-              type: 'string'
-            },
-            latitude: {
-              type: 'number'
-            },
-            longitude: {
-              type: 'number'
-            },
-            created_at: {
-              type: 'string',
-              format: 'date-time'
-            }
-          }
         }
-      }
+      },
+      securitySchemes: {
+        userIdHeader: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'X-User-ID',
+          description: 'User ID header for authentication',
+        },
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      },
     },
-    security: [{
-      bearerAuth: []
-    }]
+    security: [
+      {
+        userIdHeader: [],
+      },
+      {
+        bearerAuth: []
+      }
+    ],
   },
-  apis: ['./src/routes/api/v1/*.js'], // Path to the API routes
+  apis: ['./src/routes/api/v1/*.routes.js'],
 };
 
 const specs = swaggerJsdoc(options);
