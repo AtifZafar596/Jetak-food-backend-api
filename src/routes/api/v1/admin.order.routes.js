@@ -86,10 +86,10 @@ router.get('/orders', adminAuthMiddleware, async (req, res) => {
 
     const offset = (page - 1) * limit;
 
-    // Build query with user details
+    // Build query
     let query = supabase
       .from('orders')
-      .select('*, stores(name), users(id, full_name, phone)', { count: 'exact' });
+      .select('*, stores(name), users(phone)', { count: 'exact' });
 
     // Apply filters
     if (status) {
@@ -344,85 +344,6 @@ router.put('/orders/:id/status', adminAuthMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error updating order status:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
-/**
- * @swagger
- * /admin/api/users/{id}:
- *   get:
- *     summary: Get user details by ID
- *     description: Retrieve user information by their ID
- *     tags: [Admin Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: User ID
- *     responses:
- *       200:
- *         description: User details retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                     full_name:
- *                       type: string
- *                     phone:
- *                       type: string
- *                     email:
- *                       type: string
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: User not found
- *       500:
- *         description: Internal server error
- */
-router.get('/users/:id', adminAuthMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, full_name, phone, email')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({
-          success: false,
-          error: 'User not found'
-        });
-      }
-      throw error;
-    }
-
-    res.json({
-      success: true,
-      data: user
-    });
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
   }
 });
 
