@@ -301,6 +301,82 @@ router.get('/me',
   }
 );
 
+/**
+ * @swagger
+ * /admin/api/users/{id}:
+ *   get:
+ *     summary: Get user by ID (admin)
+ *     description: Retrieve user details by user ID
+ *     tags: [Admin Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     full_name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/users/:id', authenticateAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { supabaseAdmin } = require('../../../config/supabase');
+    const { data: user, error } = await supabaseAdmin
+      .from('users')
+      .select('id, phone, full_name, email')
+      .eq('id', id)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
 // Middleware to authenticate admin JWT token
 function authenticateAdminToken(req, res, next) {
   // Commenting out admin token authentication for now
