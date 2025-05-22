@@ -70,8 +70,8 @@ CREATE TABLE user_locations (
 -- Orders table
 CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id),
-    store_id UUID REFERENCES stores(id),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    store_id UUID NOT NULL REFERENCES stores(id) ON DELETE RESTRICT,
     status VARCHAR(20) DEFAULT 'pending',
     total_amount DECIMAL(10,2) NOT NULL,
     delivery_address TEXT NOT NULL,
@@ -79,17 +79,21 @@ CREATE TABLE orders (
     delivery_longitude DECIMAL(11,8),
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_orders_store FOREIGN KEY (store_id) REFERENCES stores(id)
 );
 
 -- Order items table
 CREATE TABLE order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    order_id UUID REFERENCES orders(id),
-    menu_item_id UUID REFERENCES menu_items(id),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE RESTRICT,
     quantity INTEGER NOT NULL,
     price DECIMAL(10,2) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id),
+    CONSTRAINT fk_order_items_menu_item FOREIGN KEY (menu_item_id) REFERENCES menu_items(id)
 );
 
 -- Admins table
@@ -149,10 +153,28 @@ CREATE POLICY "Public can view available menu items" ON menu_items
 CREATE POLICY "Users can manage their own locations" ON user_locations
     FOR ALL USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can view their own orders" ON orders
-    FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can view their own orders with related data" ON orders
+    FOR SELECT USING (
+        auth.uid() = user_id OR 
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE users.id = orders.user_id 
+            AND users.id = auth.uid()
+        )
+    );
 
-CREATE POLICY "Users can view their own order items" ON order_items
-    FOR SELECT USING (EXISTS (
-        SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND orders.user_id = auth.uid()
-    )); 
+CREATE POLICY "Public can view store data through orders" ON stores
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM orders 
+            WHERE orders.store_id = stores.id
+        )
+    );
+
+CREATE POLICY "Users can view user data through orders" ON users
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM orders 
+            WHERE orders.user_id = users.id
+        )
+    ); 

@@ -89,7 +89,7 @@ router.get('/orders', adminAuthMiddleware, async (req, res) => {
     // Build query
     let query = supabase
       .from('orders')
-      .select('*, stores(name), users(phone)', { count: 'exact' });
+      .select('*, stores!fk_orders_store(name), users!fk_orders_user(phone, full_name)', { count: 'exact' });
 
     // Apply filters
     if (status) {
@@ -171,7 +171,7 @@ router.get('/orders/:id', adminAuthMiddleware, async (req, res) => {
 
     const { data: order, error } = await supabase
       .from('orders')
-      .select('*, stores(name), users(phone)')
+      .select('*, stores!fk_orders_store(name), users!fk_orders_user(phone, full_name)')
       .eq('id', id)
       .single();
 

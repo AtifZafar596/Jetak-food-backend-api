@@ -17,7 +17,6 @@ const orderRoutes = require('./routes/api/v1/order.routes');
 const adminCategoryRoutes = require('./routes/api/v1/admin.category.routes');
 const adminStoreRoutes = require('./routes/api/v1/admin.store.routes');
 const adminMenuRoutes = require('./routes/api/v1/admin.menu.routes');
-const adminUserRoutes = require('./routes/api/v1/admin.user.routes');
 
 const app = express();
 
@@ -53,7 +52,6 @@ app.use('/api/orders', orderRoutes);
 app.use('/admin/api', adminCategoryRoutes);
 app.use('/admin/api', adminStoreRoutes);
 app.use('/admin/api', adminMenuRoutes);
-app.use('/admin/api', adminUserRoutes);
 
 // Error handling middleware
 app.use(errorLogger);
