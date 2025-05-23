@@ -88,13 +88,22 @@ router.post('/stores', adminAuthMiddleware, [
   body('name').notEmpty(),
   body('category_id').notEmpty(),
   body('description').optional().isString(),
-  body('image_url').optional().isString()
+  body('image_url').optional().isString(),
+  body('opening_time').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('closing_time').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
 ], async (req, res) => {
   try {
-    const { name, description, image_url, category_id } = req.body;
+    const { name, description, image_url, category_id, opening_time, closing_time } = req.body;
     const { data, error } = await supabase
       .from('stores')
-      .insert({ name, description, image_url, category_id })
+      .insert({ 
+        name, 
+        description, 
+        image_url, 
+        category_id,
+        opening_time,
+        closing_time
+      })
       .select()
       .single();
     if (error) throw error;
@@ -152,15 +161,20 @@ router.post('/stores', adminAuthMiddleware, [
  *       404:
  *         description: Store not found
  */
-router.put('/stores/:id', adminAuthMiddleware, async (req, res) => {
+router.put('/stores/:id', adminAuthMiddleware, [
+  body('opening_time').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('closing_time').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+], async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, image_url, category_id } = req.body;
+    const { name, description, image_url, category_id, opening_time, closing_time } = req.body;
     const updateFields = {};
     if (name !== undefined) updateFields.name = name;
     if (description !== undefined) updateFields.description = description;
     if (image_url !== undefined) updateFields.image_url = image_url;
     if (category_id !== undefined) updateFields.category_id = category_id;
+    if (opening_time !== undefined) updateFields.opening_time = opening_time;
+    if (closing_time !== undefined) updateFields.closing_time = closing_time;
     const { data, error } = await supabase
       .from('stores')
       .update(updateFields)
